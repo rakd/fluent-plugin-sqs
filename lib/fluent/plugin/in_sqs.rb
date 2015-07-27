@@ -49,6 +49,16 @@ module Fluent
           sleep @receive_interval
           @queue.receive_message(:limit => @max_number_of_messages) do |message|
             record = {}
+            
+            begin
+              JSON.parse(message.body.to_s).each do |n,v|
+                record[n.to_s] = v.to_s
+              end
+            rescue
+              $log.error "failed to parse JSON(message.body)", :error => $!.to_s, :error_class => $!.class.to_s
+              $log.warn_backtrace $!.backtrace
+            end 
+            
             record['body'] = message.body.to_s
             record['handle'] = message.handle.to_s
             record['id'] = message.id.to_s
